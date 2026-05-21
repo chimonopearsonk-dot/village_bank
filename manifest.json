@@ -11,3 +11,31 @@
   "id": "com.chimono.villagebank",
   "description": "Village savings and loan management system for group banking"
 }
+"shortcuts": [
+    {
+        "name": "Add Member",
+        "short_name": "Add",
+        "description": "Quickly add a new member",
+        "url": "/?action=addmember",
+        "icons": [{ "src": "/icon-add.png", "sizes": "192x192" }]
+    },
+    {
+        "name": "Make Deposit",
+        "short_name": "Deposit",
+        "description": "Record a savings deposit",
+        "url": "/?action=deposit",
+        "icons": [{ "src": "/icon-deposit.png", "sizes": "192x192" }]
+    },
+    {
+        "name": "Group Summary",
+        "short_name": "Summary",
+        "description": "View group financial summary",
+        "url": "/?action=summary",
+        "icons": [{ "src": "/icon-summary.png", "sizes": "192x192" }]
+    }
+]
+"categories": [
+    "finance",
+    "productivity",
+    "business"
+]
