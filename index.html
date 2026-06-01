@@ -289,6 +289,74 @@
                 grid-template-columns: 1fr 1fr;
             }
         }
+
+        /* Tooltip styles */
+        .info-tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            background: #2a5a4a;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            text-align: center;
+            font-size: 12px;
+            line-height: 20px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        
+        .info-tooltip .tooltip-text {
+            visibility: hidden;
+            width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: left;
+            border-radius: 8px;
+            padding: 12px;
+            position: absolute;
+            z-index: 1000;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 12px;
+            font-weight: normal;
+            line-height: 1.5;
+            white-space: normal;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        .info-tooltip .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #333 transparent transparent transparent;
+        }
+        
+        .info-tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        /* For mobile touch devices */
+        .info-tooltip:active .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .stat-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
     </style>
 </head>
 <body>
@@ -303,22 +371,71 @@
         
         <div class="stats" id="stats">
             <div class="stat-box">
-                <div class="stat-label">Members</div>
-                <div class="stat-value" id="statMembers">0</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">Total Savings (MK)</div>
-                <div class="stat-value" id="statSavings">MK0</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">Loans Outstanding (MK)</div>
-                <div class="stat-value" id="statLoans">MK0</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">Interest Pool (MK)</div>
-                <div class="stat-value" id="statInterest">MK0</div>
+    <div class="stat-label">
+        <div class="stat-header">
+            Members
+        </div>
+    </div>
+    <div class="stat-value" id="statMembers">0</div>
+</div>
+
+<div class="stat-box">
+    <div class="stat-label">
+        <div class="stat-header">
+            Total Savings (MK)
+            <div class="info-tooltip">?
+                <span class="tooltip-text">
+                    💰 <strong>Total Savings Pool</strong><br><br>
+                    This is the total of ALL members' savings on record.<br><br>
+                    📈 Goes UP when:<br>
+                    • Members deposit money<br>
+                    • Members repay loans<br><br>
+                    📉 Goes DOWN when:<br>
+                    • Members borrow money<br><br>
+                    This represents the group's total "paper savings".
+                </span>
             </div>
         </div>
+    </div>
+    <div class="stat-value" id="statSavings">MK0</div>
+</div>
+
+<div class="stat-box">
+    <div class="stat-label">
+        <div class="stat-header">
+            Loans Outstanding (MK)
+            <div class="info-tooltip">?
+                <span class="tooltip-text">
+                    📊 <strong>Outstanding Loans</strong><br><br>
+                    Total amount members currently owe (principal + unpaid interest).<br><br>
+                    💡 This money is NOT in the savings pool yet.<br>
+                    When repaid, it will be added to savings.<br><br>
+                    🔴 If a loan is overdue, you'll see a warning.
+                </span>
+            </div>
+        </div>
+    </div>
+    <div class="stat-value" id="statLoans">MK0</div>
+</div>
+
+<div class="stat-box">
+    <div class="stat-label">
+        <div class="stat-header">
+            Interest Pool (MK)
+            <div class="info-tooltip">?
+                <span class="tooltip-text">
+                    💸 <strong>Interest Pool</strong><br><br>
+                    Total interest collected from all loans.<br><br>
+                    🎉 When you click "Share Profits":<br>
+                    This amount is divided EQUALLY among ALL members.<br><br>
+                    💡 Members with outstanding loans have their share deducted from what they owe.
+                </span>
+            </div>
+        </div>
+    </div>
+    <div class="stat-value" id="statInterest">MK0</div>
+</div>
+</div>
         
         <div class="card">
             <div class="card-title">Quick Actions</div>
@@ -332,6 +449,7 @@
                 <button onclick="showModal('statementModal')">📄 Member Statement</button>
                 <button onclick="showGroupSummary()" class="secondary">📊 Group Summary</button>
                 <button onclick="showModal('settingsModal')" class="warning">⚙️ Settings</button>
+                <button onclick="showHelpModal()" style="background:#17a2b8;">❓ Help</button>
             </div>
         </div>
         
@@ -497,7 +615,55 @@
             <button onclick="authenticateAdmin()" class="success">Verify</button>
             <button onclick="closeModal('passwordModal')" class="secondary">Cancel</button>
         </div>
+
+        <!-- Help Modal -->
+<div id="helpModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">❓ How Things Work</div>
+        
+        <div style="margin-bottom: 16px;">
+            <strong>💰 Savings Pool</strong><br>
+            Total of ALL members' savings on record.<br>
+            <em>Up: deposits, repayments | Down: borrowing</em>
+        </div>
+        
+        <div style="margin-bottom: 16px;">
+            <strong>📊 Loans Outstanding</strong><br>
+            Total amount members owe (principal + unpaid interest).<br>
+            <em>Not in savings pool until repaid.</em>
+        </div>
+        
+        <div style="margin-bottom: 16px;">
+            <strong>💸 Interest Pool</strong><br>
+            Total interest collected from all loans.<br>
+            <em>Shared equally among all members.</em>
+        </div>
+        
+        <div style="margin-bottom: 16px;">
+            <strong>🏦 How Borrowing Works</strong><br>
+            • Borrow up to 3× your savings<br>
+            • Flat 20% interest on principal<br>
+            • Example: Borrow MK100 → repay MK120<br>
+            • Pay interest first, then principal
+        </div>
+        
+        <div style="margin-bottom: 16px;">
+            <strong>🎉 Profit Sharing</strong><br>
+            • All interest collected is shared equally<br>
+            • Members with loans: their share deducts from debt<br>
+            • Members without loans: money added to savings
+        </div>
+        
+        <div style="margin-bottom: 16px;">
+            <strong>🔐 Admin Password</strong><br>
+            Default: test123<br>
+            Required for: Share Profits, Edit/Delete, Backup, Restore, Reset
+        </div>
+        
+        <button onclick="closeModal('helpModal')" class="success">Got it!</button>
     </div>
+  </div>
+</div>
     
     <div id="toast" class="toast"></div>
     <footer>
@@ -1086,6 +1252,10 @@ ${log}
                 event.target.style.display = 'none';
             }
         }
+        
+        function showHelpModal() {
+    showModal('helpModal');
+}
     </script>
 </body>
 </html>
