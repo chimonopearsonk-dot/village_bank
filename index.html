@@ -357,6 +357,22 @@
             justify-content: center;
             gap: 5px;
         }
+                .help-section {
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .help-section strong {
+            color: #1e3c32;
+            display: block;
+            margin-bottom: 6px;
+        }
+        
+        .help-section em {
+            color: #6c757d;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
@@ -605,18 +621,8 @@
             <button onclick="closeModal('restoreModal')" class="secondary">Cancel</button>
         </div>
     </div>
-    
-    <!-- Admin Password Modal -->
-    <div id="passwordModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">🔐 Admin Authentication</div>
-            <div style="text-align: center; margin-bottom: 16px;">Enter password to access this feature</div>
-            <input type="password" id="adminPassword" placeholder="Enter admin password" style="margin-bottom: 16px;">
-            <button onclick="authenticateAdmin()" class="success">Verify</button>
-            <button onclick="closeModal('passwordModal')" class="secondary">Cancel</button>
-        </div>
 
-        <!-- Help Modal -->
+    <!-- Help Modal -->
 <div id="helpModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">❓ How Things Work</div>
@@ -663,7 +669,17 @@
         <button onclick="closeModal('helpModal')" class="success">Got it!</button>
     </div>
   </div>
-</div>
+    
+    <!-- Admin Password Modal -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">🔐 Admin Authentication</div>
+            <div style="text-align: center; margin-bottom: 16px;">Enter password to access this feature</div>
+            <input type="password" id="adminPassword" placeholder="Enter admin password" style="margin-bottom: 16px;">
+            <button onclick="authenticateAdmin()" class="success">Verify</button>
+            <button onclick="closeModal('passwordModal')" class="secondary">Cancel</button>
+        </div>
+    </div>
     
     <div id="toast" class="toast"></div>
     <footer>
