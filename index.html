@@ -464,6 +464,7 @@
                 <div class="card-title">Admin Actions</div>
                 <div class="button-grid">
                     <button onclick="showModal('addMemberModal')">➕ Add Member</button>
+                    <button onclick="showEditMemberModal()" style="background:#ffc107; color:#333;">✏️ Edit/Delete</button>
                     <button onclick="showModal('depositModal')">💰 Deposit</button>
                     <button onclick="showModal('borrowModal')">📊 Borrow</button>
                     <button onclick="showModal('repayModal')">💸 Repay Loan</button>
@@ -602,9 +603,47 @@
                 <button onclick="closeModal('helpModal')" class="success">Got it!</button>
             </div>
         </div>
+
+            <!-- Edit/Delete Member Modal -->
+    <div id="editMemberModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">✏️ Edit / Delete Member</div>
+            
+            <select id="editMemberSelect" onchange="loadMemberForEdit()" style="margin-bottom: 16px;">
+                <option value="">Select member...</option>
+            </select>
+            
+            <input type="hidden" id="editMemberId">
+            
+            <div id="editMemberFields" style="display: none;">
+                <label>Member Name</label>
+                <input type="text" id="editMemberName" placeholder="New name">
+                <button onclick="updateMemberName()" class="success" style="margin-bottom: 16px;">✏️ Rename Member</button>
+                
+                <hr>
+                
+                <label>Savings Balance (MK)</label>
+                <input type="number" id="editMemberSavings" step="0.01">
+                <button onclick="updateMemberSavings()" class="warning" style="margin-bottom: 16px;">💰 Correct Savings</button>
+                
+                <hr>
+                
+                <div class="danger-box" style="background:#f8d7da; padding: 12px; border-radius: 12px; margin: 12px 0;">
+                    <div style="font-weight: bold; color: #721c24; margin-bottom: 8px;">⚠️ DANGER ZONE - Delete Member</div>
+                    <div style="font-size: 13px; color: #721c24; margin-bottom: 12px;">
+                        This will permanently delete the member, ALL their transactions, 
+                        and remove any unpaid interest from the pool. Cannot be undone!
+                    </div>
+                    <button onclick="deleteMember()" class="danger">🗑️ DELETE MEMBER PERMANENTLY</button>
+                </div>
+            </div>
+            
+            <button onclick="closeModal('editMemberModal')" class="secondary" style="margin-top: 12px;">Close</button>
+        </div>
+    </div>
         
         <footer>
-            © 2026 Chimono Production | All Rights Reserved!
+            © 2026 Chimono Production | All Rights Reserved.
         </footer>
     </div>
     
@@ -848,7 +887,7 @@ ${member.loan_due_date ? `📅 Loan Due Date: ${member.loan_due_date}` : ''}
 💸 Total Interest Charged: MK${(member.interest_charged || 0).toFixed(2)}
 📈 Interest Earned from profits: MK${(member.total_interest_earned || 0).toFixed(2)}
 ━━━━━━━━━━━━━━━━━━━━━━
-🏦 Village Bank System | © 2026 Chimono Production | All Rights Reserved!
+🏦 Village Bank System | © 2026 Chimono Production | All Rights Reserved.
             `;
             document.getElementById('statementContent').textContent = statement;
             document.getElementById('printStatementBtn').style.display = 'block';
@@ -1043,6 +1082,182 @@ ${member.loan_due_date ? `📅 Loan Due Date: ${member.loan_due_date}` : ''}
         
         // Initial load
         document.getElementById('memberListView').innerHTML = '<div style="text-align:center;color:#999;padding:20px;">Loading members...</div>';
+                
+        // ========== ADMIN EDIT/DELETE FUNCTIONS ==========
+       
+        // Show edit member modal
+        function showEditMemberModal() {
+            if (!currentUser) { showToast('Admin login required', true); return; }
+            updateEditMemberDropdown();
+            showModal('editMemberModal');
+        }
+        
+        function updateEditMemberDropdown() {
+            const select = document.getElementById('editMemberSelect');
+            if (!select) return;
+            let html = '<option value="">Select member...</option>';
+            for (const [id, member] of Object.entries(members)) {
+                if (member && member.name) {
+                    html += `<option value="${id}">${escapeHtml(member.name)}</option>`;
+                }
+            }
+            select.innerHTML = html;
+        }
+        
+        function loadMemberForEdit() {
+            const memberId = document.getElementById('editMemberSelect').value;
+            if (!memberId || !members[memberId]) return;
+            const member = members[memberId];
+            document.getElementById('editMemberId').value = memberId;
+            document.getElementById('editMemberName').value = member.name;
+            document.getElementById('editMemberSavings').value = member.savings || 0;
+            document.getElementById('editMemberLoanPrincipal').value = member.loan_principal || 0;
+            document.getElementById('editMemberLoanInterest').value = member.loan_remaining_interest || 0;
+        }
+        
+        // Update member name only
+        function updateMemberName() {
+            if (!currentUser) { showToast('Admin login required', true); return; }
+            
+            const memberId = document.getElementById('editMemberSelect').value;
+            const newName = document.getElementById('editMemberName').value.trim();
+            
+            if (!memberId || !members[memberId]) {
+                showToast('Select a member', true);
+                return;
+            }
+            if (!newName) {
+                showToast('Enter a new name', true);
+                return;
+            }
+            
+            // Check if name already exists
+            for (const [id, member] of Object.entries(members)) {
+                if (id !== memberId && member.name && member.name.toLowerCase() === newName.toLowerCase()) {
+                    showToast('Member with that name already exists', true);
+                    return;
+                }
+            }
+            
+            database.ref('members/' + memberId + '/name').set(newName)
+                .then(() => {
+                    showToast(`✅ Member renamed to "${newName}"`);
+                    closeModal('editMemberModal');
+                })
+                .catch((error) => {
+                    showToast("Error: " + error.message, true);
+                });
+        }
+        
+        // Update member savings (admin correction)
+        function updateMemberSavings() {
+            if (!currentUser) { showToast('Admin login required', true); return; }
+            
+            const memberId = document.getElementById('editMemberId').value;
+            const newSavings = parseFloat(document.getElementById('editMemberSavings').value);
+            
+            if (!memberId || !members[memberId]) {
+                showToast('Select a member', true);
+                return;
+            }
+            if (isNaN(newSavings) || newSavings < 0) {
+                showToast('Enter valid savings amount', true);
+                return;
+            }
+            
+            const oldSavings = members[memberId].savings || 0;
+            const difference = newSavings - oldSavings;
+            
+            database.ref('members/' + memberId + '/savings').set(newSavings)
+                .then(() => {
+                    logTransaction(members[memberId].name, 'savings_adjusted', difference);
+                    showToast(`✅ Savings updated: MK${oldSavings.toFixed(2)} → MK${newSavings.toFixed(2)}`);
+                    closeModal('editMemberModal');
+                })
+                .catch((error) => {
+                    showToast("Error: " + error.message, true);
+                });
+        }
+        
+        // Delete member - removes ALL data including unpaid interest from pool
+        function deleteMember() {
+            if (!currentUser) { showToast('Admin login required', true); return; }
+            
+            const memberId = document.getElementById('editMemberSelect').value;
+            if (!memberId || !members[memberId]) {
+                showToast('Select a member', true);
+                return;
+            }
+            
+            const member = members[memberId];
+            const memberName = member.name;
+            const unpaidInterest = member.loan_remaining_interest || 0;
+            const unpaidPrincipal = member.loan_principal || 0;
+            const totalDebt = unpaidPrincipal + unpaidInterest;
+            
+            let warningMsg = `⚠️⚠️⚠️ DELETE MEMBER: ${memberName} ⚠️⚠️⚠️\n\n`;
+            warningMsg += `This will permanently delete:\n`;
+            warningMsg += `• Member: ${memberName}\n`;
+            warningMsg += `• All transactions for ${memberName}\n`;
+            warningMsg += `• Savings balance: MK${(member.savings || 0).toFixed(2)}\n`;
+            
+            if (totalDebt > 0) {
+                warningMsg += `\n🔴 OUTSTANDING DEBT: MK${totalDebt.toFixed(2)}\n`;
+                warningMsg += `   (Principal: MK${unpaidPrincipal.toFixed(2)}, Interest: MK${unpaidInterest.toFixed(2)})\n`;
+                warningMsg += `\nThis amount will be REMOVED from the Interest Pool.\n`;
+            }
+            
+            warningMsg += `\nType "${memberName}" to confirm deletion:`;
+            
+            const confirmation = prompt(warningMsg);
+            
+            if (confirmation !== memberName) {
+                showToast('Deletion cancelled', true);
+                return;
+            }
+            
+            // Show loading toast
+            showToast(`Deleting ${memberName}...`);
+            
+            // Step 1: Remove unpaid interest from the pool
+            const removeFromPool = (unpaidInterest > 0) ? 
+                database.ref('interest_pool/total').set(Math.max(0, loanInterestTotal - unpaidInterest)) :
+                Promise.resolve();
+            
+            // Step 2: Delete the member
+            const deleteMember = database.ref('members/' + memberId).remove();
+            
+            // Step 3: Delete all transactions related to this member
+            const deleteTransactions = database.ref('transactions').once('value').then((snapshot) => {
+                const transactions = snapshot.val();
+                if (transactions) {
+                    const updates = {};
+                    for (const [transId, trans] of Object.entries(transactions)) {
+                        if (trans.member_name === memberName) {
+                            updates['transactions/' + transId] = null;
+                        }
+                    }
+                    if (Object.keys(updates).length > 0) {
+                        return database.ref().update(updates);
+                    }
+                }
+                return Promise.resolve();
+            });
+            
+            // Execute all deletions
+            Promise.all([removeFromPool, deleteMember, deleteTransactions])
+                .then(() => {
+                    showToast(`🗑️ Member "${memberName}" and all data permanently deleted`);
+                    if (unpaidInterest > 0) {
+                        showToast(`Removed MK${unpaidInterest.toFixed(2)} unpaid interest from pool`);
+                    }
+                    closeModal('editMemberModal');
+                })
+                .catch((error) => {
+                    console.error("Delete error:", error);
+                    showToast("Error during deletion: " + error.message, true);
+                });
+        }
     </script>
 </body>
 </html>
