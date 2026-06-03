@@ -604,44 +604,6 @@
             </div>
         </div>
 
-            <!-- Edit/Delete Member Modal -->
-    <div id="editMemberModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">✏️ Edit / Delete Member</div>
-            
-            <select id="editMemberSelect" onchange="loadMemberForEdit()" style="margin-bottom: 16px;">
-                <option value="">Select member...</option>
-            </select>
-            
-            <input type="hidden" id="editMemberId">
-            
-            <div id="editMemberFields" style="display: none;">
-                <label>Member Name</label>
-                <input type="text" id="editMemberName" placeholder="New name">
-                <button onclick="updateMemberName()" class="success" style="margin-bottom: 16px;">✏️ Rename Member</button>
-                
-                <hr>
-                
-                <label>Savings Balance (MK)</label>
-                <input type="number" id="editMemberSavings" step="0.01">
-                <button onclick="updateMemberSavings()" class="warning" style="margin-bottom: 16px;">💰 Correct Savings</button>
-                
-                <hr>
-                
-                <div class="danger-box" style="background:#f8d7da; padding: 12px; border-radius: 12px; margin: 12px 0;">
-                    <div style="font-weight: bold; color: #721c24; margin-bottom: 8px;">⚠️ DANGER ZONE - Delete Member</div>
-                    <div style="font-size: 13px; color: #721c24; margin-bottom: 12px;">
-                        This will permanently delete the member, ALL their transactions, 
-                        and remove any unpaid interest from the pool. Cannot be undone!
-                    </div>
-                    <button onclick="deleteMember()" class="danger">🗑️ DELETE MEMBER PERMANENTLY</button>
-                </div>
-            </div>
-            
-            <button onclick="closeModal('editMemberModal')" class="secondary" style="margin-top: 12px;">Close</button>
-        </div>
-    </div>
-        
         <footer>
             © 2026 Chimono Production | All Rights Reserved.
         </footer>
@@ -1259,5 +1221,43 @@ ${member.loan_due_date ? `📅 Loan Due Date: ${member.loan_due_date}` : ''}
                 });
         }
     </script>
+     
+    <!-- Edit/Delete Member Modal -->
+    <div id="editMemberModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">✏️ Edit / Delete Member</div>
+            
+            <select id="editMemberSelect" onchange="loadMemberForEdit()" style="margin-bottom: 16px;">
+                <option value="">Select member...</option>
+            </select>
+            
+            <input type="hidden" id="editMemberId">
+            
+            <div id="editMemberFields" style="display: none;">
+                <label>Member Name</label>
+                <input type="text" id="editMemberName" placeholder="New name">
+                <button onclick="updateMemberName()" class="success" style="margin-bottom: 16px;">✏️ Rename Member</button>
+                
+                <hr>
+                
+                <label>Savings Balance (MK)</label>
+                <input type="number" id="editMemberSavings" step="0.01">
+                <button onclick="updateMemberSavings()" class="warning" style="margin-bottom: 16px;">💰 Correct Savings</button>
+                
+                <hr>
+                
+                <div class="danger-box" style="background:#f8d7da; padding: 12px; border-radius: 12px; margin: 12px 0;">
+                    <div style="font-weight: bold; color: #721c24; margin-bottom: 8px;">⚠️ DANGER ZONE - Delete Member</div>
+                    <div style="font-size: 13px; color: #721c24; margin-bottom: 12px;">
+                        This will permanently delete the member, ALL their transactions, 
+                        and remove any unpaid interest from the pool. Cannot be undone!
+                    </div>
+                    <button onclick="deleteMember()" class="danger">🗑️ DELETE MEMBER PERMANENTLY</button>
+                </div>
+            </div>
+            
+            <button onclick="closeModal('editMemberModal')" class="secondary" style="margin-top: 12px;">Close</button>
+        </div>
+    </div>
 </body>
 </html>
