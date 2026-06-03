@@ -1050,7 +1050,8 @@ ${member.loan_due_date ? `📅 Loan Due Date: ${member.loan_due_date}` : ''}
         // Show edit member modal
         function showEditMemberModal() {
             if (!currentUser) { showToast('Admin login required', true); return; }
-            updateEditMemberDropdown();
+            updateEditMemberDropdown();  // Make sure dropdown is populated
+            document.getElementById('editMemberFields').style.display = 'none'; // Hide fields initially
             showModal('editMemberModal');
         }
         
@@ -1068,13 +1069,22 @@ ${member.loan_due_date ? `📅 Loan Due Date: ${member.loan_due_date}` : ''}
         
         function loadMemberForEdit() {
             const memberId = document.getElementById('editMemberSelect').value;
-            if (!memberId || !members[memberId]) return;
+            const editFields = document.getElementById('editMemberFields');
+           
+            if (!memberId || !members[memberId]) {
+                editFields.style.display = 'none'; 
+                return;
+            }
+           
             const member = members[memberId];
             document.getElementById('editMemberId').value = memberId;
             document.getElementById('editMemberName').value = member.name;
             document.getElementById('editMemberSavings').value = member.savings || 0;
             document.getElementById('editMemberLoanPrincipal').value = member.loan_principal || 0;
             document.getElementById('editMemberLoanInterest').value = member.loan_remaining_interest || 0;
+
+            // Show the edit fields
+            editFields.style.display = 'block';
         }
         
         // Update member name only
@@ -1221,7 +1231,7 @@ ${member.loan_due_date ? `📅 Loan Due Date: ${member.loan_due_date}` : ''}
                 });
         }
     </script>
-     
+    
     <!-- Edit/Delete Member Modal -->
     <div id="editMemberModal" class="modal">
         <div class="modal-content">
@@ -1234,30 +1244,31 @@ ${member.loan_due_date ? `📅 Loan Due Date: ${member.loan_due_date}` : ''}
             <input type="hidden" id="editMemberId">
             
             <div id="editMemberFields" style="display: none;">
-                <label>Member Name</label>
-                <input type="text" id="editMemberName" placeholder="New name">
+                <label style="font-weight: 500; margin-bottom: 5px; display: block;">Member Name</label>
+                <input type="text" id="editMemberName" placeholder="New name" style="margin-bottom: 10px;">
                 <button onclick="updateMemberName()" class="success" style="margin-bottom: 16px;">✏️ Rename Member</button>
                 
                 <hr>
                 
-                <label>Savings Balance (MK)</label>
-                <input type="number" id="editMemberSavings" step="0.01">
-                <button onclick="updateMemberSavings()" class="warning" style="margin-bottom: 16px;">💰 Correct Savings</button>
+                <label style="font-weight: 500; margin-bottom: 5px; display: block;">Savings Balance (MK)</label>
+                <input type="number" id="editMemberSavings" step="0.01" style="margin-bottom: 10px;">
+                <button onclick="updateMemberSavings()" class="warning" style="margin-bottom: 16px; background:#ffc107; color:#333;">💰 Correct Savings</button>
                 
                 <hr>
                 
-                <div class="danger-box" style="background:#f8d7da; padding: 12px; border-radius: 12px; margin: 12px 0;">
+                <div style="background:#f8d7da; padding: 12px; border-radius: 12px; margin: 12px 0;">
                     <div style="font-weight: bold; color: #721c24; margin-bottom: 8px;">⚠️ DANGER ZONE - Delete Member</div>
                     <div style="font-size: 13px; color: #721c24; margin-bottom: 12px;">
                         This will permanently delete the member, ALL their transactions, 
                         and remove any unpaid interest from the pool. Cannot be undone!
                     </div>
-                    <button onclick="deleteMember()" class="danger">🗑️ DELETE MEMBER PERMANENTLY</button>
+                    <button onclick="deleteMember()" class="danger" style="background:#dc3545;">🗑️ DELETE MEMBER PERMANENTLY</button>
                 </div>
             </div>
             
             <button onclick="closeModal('editMemberModal')" class="secondary" style="margin-top: 12px;">Close</button>
         </div>
     </div>
+   
 </body>
 </html>
