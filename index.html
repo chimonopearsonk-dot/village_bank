@@ -869,6 +869,11 @@
                 }
             }
         }
+        // Also update edit member dropdown if modal is open
+            if (document.getElementById('editMemberModal') && document.getElementById('editMemberModal').style.display === 'flex') {
+                populateEditMemberDropdown();
+            }
+        }
         
         function showMemberStatement(memberId) {
             const member = members[memberId];
@@ -1083,44 +1088,66 @@ ${member.loan_due_date ? `📅 Loan Due Date: ${member.loan_due_date}` : ''}
         // Initial load
         document.getElementById('memberListView').innerHTML = '<div style="text-align:center;color:#999;padding:20px;">Loading members...</div>';
                 
-        // ========== ADMIN EDIT/DELETE FUNCTIONS ==========
-       
-        // Show edit member modal
+        // ========== ADMIN EDIT/DELETE FUNCTIONS ========
+        
         function showEditMemberModal() {
             if (!currentUser) { showToast('Admin login required', true); return; }
-            updateEditMemberDropdown();  // Make sure dropdown is populated
-            document.getElementById('editMemberFields').style.display = 'none'; // Hide fields initially
+            
+            // Show loading, hide content
+            document.getElementById('editMemberLoading').style.display = 'block';
+            document.getElementById('editMemberContent').style.display = 'none';
+            document.getElementById('editMemberFields').style.display = 'none';
+            
             showModal('editMemberModal');
+            
+            // Populate dropdown after a short delay to ensure modal is open
+            setTimeout(() => {
+                populateEditMemberDropdown();
+            }, 100);
         }
         
-        function updateEditMemberDropdown() {
+        function populateEditMemberDropdown() {
             const select = document.getElementById('editMemberSelect');
             if (!select) return;
-            let html = '<option value="">Select member...</option>';
+            
+            // Clear existing options
+            select.innerHTML = '<option value="">Select member...</option>';
+            
+            // Add members from the members object
+            let memberCount = 0;
             for (const [id, member] of Object.entries(members)) {
                 if (member && member.name) {
-                    html += `<option value="${id}">${escapeHtml(member.name)}</option>`;
+                    const option = document.createElement('option');
+                    option.value = id;
+                    option.textContent = member.name;
+                    select.appendChild(option);
+                    memberCount++;
                 }
             }
-            select.innerHTML = html;
+            
+            if (memberCount > 0) {
+                document.getElementById('editMemberLoading').style.display = 'none';
+                document.getElementById('editMemberContent').style.display = 'block';
+            } else {
+                document.getElementById('editMemberLoading').innerHTML = 'No members found. Add members first.';
+                document.getElementById('editMemberLoading').style.color = '#999';
+            }
         }
         
         function loadMemberForEdit() {
             const memberId = document.getElementById('editMemberSelect').value;
             const editFields = document.getElementById('editMemberFields');
-           
+            
             if (!memberId || !members[memberId]) {
-                editFields.style.display = 'none'; 
+                editFields.style.display = 'none';
                 return;
             }
-           
+            
             const member = members[memberId];
             document.getElementById('editMemberId').value = memberId;
             document.getElementById('editMemberName').value = member.name;
             document.getElementById('editMemberSavings').value = member.savings || 0;
-            document.getElementById('editMemberLoanPrincipal').value = member.loan_principal || 0;
-            document.getElementById('editMemberLoanInterest').value = member.loan_remaining_interest || 0;
-
+            
             // Show the edit fields
             editFields.style.display = 'block';
         }
@@ -1149,9 +1176,28 @@ ${member.loan_due_date ? `📅 Loan Due Date: ${member.loan_due_date}` : ''}
                 }
             }
             
+            const oldName = members[memberId].name;
+            
             database.ref('members/' + memberId + '/name').set(newName)
                 .then(() => {
-                    showToast(`✅ Member renamed to "${newName}"`);
+                    // Also update any transactions with this member name
+                    database.ref('transactions').once('value').then((snapshot) => {
+                        const transactions = snapshot.val();
+                        if (transactions) {
+                            const updates = {};
+                            for (const [transId, trans] of Object.entries(transactions)) {
+                                if (trans.member_name === oldName) {
+                                    updates['transactions/' + transId + '/member_name'] = newName;
+                                }
+                            }
+                            if (Object.keys(updates).length > 0) {
+                                return database.ref().update(updates);
+                            }
+                        }
+                        return Promise.resolve();
+                    }).catch(err => console.log(err));
+                    
+                    showToast(`✅ Member renamed from "${oldName}" to "${newName}"`);
                     closeModal('editMemberModal');
                 })
                 .catch((error) => {
@@ -1226,7 +1272,6 @@ ${member.loan_due_date ? `📅 Loan Due Date: ${member.loan_due_date}` : ''}
                 return;
             }
             
-            // Show loading toast
             showToast(`Deleting ${memberName}...`);
             
             // Step 1: Remove unpaid interest from the pool
@@ -1262,6 +1307,12 @@ ${member.loan_due_date ? `📅 Loan Due Date: ${member.loan_due_date}` : ''}
                         showToast(`Removed MK${unpaidInterest.toFixed(2)} unpaid interest from pool`);
                     }
                     closeModal('editMemberModal');
+                    // Refresh the dropdown for next use
+                    setTimeout(() => {
+                        if (document.getElementById('editMemberModal').style.display === 'flex') {
+                            populateEditMemberDropdown();
+                        }
+                    }, 500);
                 })
                 .catch((error) => {
                     console.error("Delete error:", error);
