@@ -869,10 +869,6 @@
                 }
             }
         }
-        // Also update edit member dropdown if modal is open
-            if (document.getElementById('editMemberModal') && document.getElementById('editMemberModal').style.display === 'flex') {
-                populateEditMemberDropdown();
-            }
         
         function showMemberStatement(memberId) {
             const member = members[memberId];
