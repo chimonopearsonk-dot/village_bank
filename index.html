@@ -838,7 +838,7 @@
             }
             
             let html = '';
-            for (const [id, member] of Object.entries(members)) {
+            for (const [id, member] of sortedMembers) {
                 const hasLoan = (member.loan_principal > 0 || member.loan_remaining_interest > 0);
                 html += `
                     <div class="member-item" onclick="showMemberStatement('${id}')">
@@ -880,7 +880,7 @@
                 const select = document.getElementById(id);
                 if (select) {
                     let html = '';
-                    for (const [memberId, member] of Object.entries(members)) {
+                    for (const [memberId, member] of sortedMembers) {
                         html += `<option value="${memberId}">${escapeHtml(member.name)}</option>`;
                     }
                     select.innerHTML = html;
